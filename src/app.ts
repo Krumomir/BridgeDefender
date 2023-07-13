@@ -3,11 +3,8 @@ import { connectDB } from "./config/db";
 import { addUser, fetchData } from "./service/db_service";
 import EthAcc from './models/eth_acc';
 import { parseEther, hexlify, ethers, WebSocketProvider } from 'ethers';
-import { estimateGas, getGasPrice, getTransactionCount, myAddress, wallet } from './service/rpc_service';
-
-//require('dotenv').config()
-
-console.log(process.env)
+import { estimateGas, getGasPrice, getTransactionCount, wallet } from './service/rpc_service';
+require('dotenv').config()
 
 const app = express();
 const port = 3000;
@@ -38,7 +35,7 @@ app.get('/address/:address', async (req, res) => {
   }
 });
 
-const senderAccount = myAddress;
+const senderAccount = process.env.MY_ADDRESS;
 
 app.post('/sendEther/:amount', async (req, res) => {
   if (!req.params.amount) {

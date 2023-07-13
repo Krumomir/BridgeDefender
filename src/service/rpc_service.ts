@@ -6,13 +6,9 @@ const testnet = "https://eth-sepolia.g.alchemy.com/v2/" + process.env.SEPOLIA_AL
 
 const mainProvider = new JsonRpcProvider(mainnet);
 const testProvider = new JsonRpcProvider(testnet);
-const martoAddress = '0x77C9EF0FD9f22ca390a6267e46fB6092fb8d87C1';
-const myAddress = '0x21a3884770F1E039b2a8F9BDD4483f3937176bF3';
-const myPrivateKey = process.env.MY_PRIVATE_KEY;
+const myPrivateKey = process.env.PRIVATE_KEY;
 
-console.log('Wallet address: ' + myPrivateKey);
 const wallet = new ethers.Wallet(myPrivateKey, testProvider);
-
 
 async function getBlockNumber(): Promise<number> {
     return await mainProvider.getBlockNumber();
@@ -46,4 +42,4 @@ async function estimateGas(senderAccount: string, recieverAddress: string, value
     });
 }
 
-export { estimateGas, getGasPrice, getTransactionCount, getBlockNumber, getBlock, getTransaction, getBalance, wallet, mainProvider, testProvider, martoAddress, myAddress, myPrivateKey }
+export { estimateGas, getGasPrice, getTransactionCount, getBlockNumber, getBlock, getTransaction, getBalance, wallet, mainProvider, testProvider, myPrivateKey }
