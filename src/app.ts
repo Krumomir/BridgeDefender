@@ -5,6 +5,10 @@ import EthAcc from './models/eth_acc';
 import { parseEther, hexlify, ethers, WebSocketProvider } from 'ethers';
 import { estimateGas, getGasPrice, getTransactionCount, myAddress, wallet } from './service/rpc_service';
 
+//require('dotenv').config()
+
+console.log(process.env)
+
 const app = express();
 const port = 3000;
 
@@ -73,7 +77,7 @@ const provider = new WebSocketProvider(
   "ws://localhost:8545"
 );
 
-const bridgeAddress = "0x6212cb549De37c25071cF506aB7E115D140D9e42";
+const bridgeAddress = "0x4A679253410272dd5232B3Ff7cF5dbB88f295319";
 const contract = new ethers.Contract(bridgeAddress, ABI, provider);
 
 async function getTransfer() {
@@ -83,7 +87,15 @@ async function getTransfer() {
     console.log("Transaction hash:", _transactionHash);
 
     //get transaction with _transactionHash
+    //if transaction doesn't exist, call defend function
     const tx = await provider.getTransaction(_transactionHash);
+    if (!tx) {
+      console.log("Transaction not found");
+      provider.send("defend", proposalHash);
+      const proposal = await provider.send("proposals", proposalHash);
+      console.log(proposal);
+      return;
+    }
     console.log(tx);
 
     //decode transaction.data
