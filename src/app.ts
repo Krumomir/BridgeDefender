@@ -16,11 +16,6 @@ app.get('/', (req, res) => {
 });
 
 app.get('/address/:address', async (req, res) => {
-  if (!req.params.address) {
-    res.status(400).send('No Address provided')
-    return;
-  }
-
   try {
     const acc = await EthAcc.findOne({ address: req.params.address });
 
@@ -29,7 +24,7 @@ app.get('/address/:address', async (req, res) => {
       return;
     }
 
-    res.send(acc);
+    res.status(200).send(acc);
   } catch (err) {
     res.status(500).send('Internal Server Error');
   }
@@ -38,13 +33,13 @@ app.get('/address/:address', async (req, res) => {
 const senderAccount = process.env.MY_ADDRESS;
 
 app.post('/sendEther/:amount', async (req, res) => {
-  if (!req.params.amount) {
+  const recieverAmount = req.params.amount;
+  if (!recieverAmount) {
     res.status(400).send('No amount provided');
     return;
   }
 
-  const recieverAmount = req.params.amount;
-  if (parseInt(recieverAmount) <= 0) {
+  if (parseFloat(recieverAmount) <= 0) {
     res.status(400).send('Amount must be greater than 0');
     return;
   }
@@ -64,20 +59,20 @@ app.post('/sendEther/:amount', async (req, res) => {
   wallet.sendTransaction(tx).then((transaction) => {
     console.dir(transaction)
     console.log(hexlify(transaction.hash))
-    res.send(transaction);
+    res.status(200).send('Ether sent successfully!');
   });
 });
 
-const ABI = require("../../Bridge/artifacts/contracts/Bridge.sol/Bridge.json").abi;
-
-const provider = new WebSocketProvider(
-  "ws://localhost:8545"
-);
-
-const bridgeAddress = "0x4A679253410272dd5232B3Ff7cF5dbB88f295319";
-const contract = new ethers.Contract(bridgeAddress, ABI, provider);
 
 async function getTransfer() {
+  const ABI = require("../../Bridge/artifacts/contracts/Bridge.sol/Bridge.json").abi;
+
+  const provider = new WebSocketProvider(
+    "ws://localhost:8545"
+  );
+  const bridgeAddress = "0x4A679253410272dd5232B3Ff7cF5dbB88f295319";
+  const contract = new ethers.Contract(bridgeAddress, ABI, provider);
+
   await contract.on("Approved", async (proposalHash, _transactionHash) => {
     console.log("Approved event:");
     console.log("Proposal hash:", proposalHash);
@@ -139,12 +134,14 @@ app.listen(port, () => {
   return console.log(`Express is listening at http://localhost:${port}`);
 });
 
-async function getAllTransfersFromBlock(startBlock) {
+async function getAllTransfersFromBlock(contract, startBlock) {
   contract.queryFilter("SendMsg", startBlock).then((events) => {
     console.log(events);
   });
 }
 
 connectDB();
-//getAllTransfersFromBlock(17669455);
-getTransfer();
+//getAllTransfersFromBlock(contract, 17669455);
+//getTransfer();
+
+export default app;
