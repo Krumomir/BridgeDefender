@@ -2,8 +2,8 @@ import express, { json } from 'express';
 import { connectDB } from "./config/db";
 import { addUser, fetchData } from "./service/db_service";
 import EthAcc from './models/eth_acc';
-import { parseEther, hexlify, ethers, WebSocketProvider, AbiCoder } from 'ethers';
-import { estimateGas, getGasPrice, getTransactionCount, myAddress, myPrivateKey, testProvider } from './service/rpc_service';
+import { parseEther, hexlify, ethers, WebSocketProvider } from 'ethers';
+import { estimateGas, getGasPrice, getTransactionCount, myAddress, wallet } from './service/rpc_service';
 
 const app = express();
 const port = 3000;

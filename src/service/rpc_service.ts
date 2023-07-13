@@ -42,4 +42,4 @@ async function estimateGas(senderAccount: string, recieverAddress: string, value
     });
 }
 
-export { estimateGas, getGasPrice, getTransactionCount, getBlockNumber, getBlock, getTransaction, getBalance, mainProvider, testProvider, martoAddress, myAddress, myPrivateKey }
+export { estimateGas, getGasPrice, getTransactionCount, getBlockNumber, getBlock, getTransaction, getBalance, wallet,mainProvider, testProvider, martoAddress, myAddress, myPrivateKey }
