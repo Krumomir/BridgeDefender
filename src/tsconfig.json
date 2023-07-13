@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "moduleResolution": "node",
+        "module": "es2022",
+        "target": "es2017",
+        "lib": [
+            "es2017",
+            "es2020",
+            "dom"
+        ],
+        "esModuleInterop": true
+    }
+}
