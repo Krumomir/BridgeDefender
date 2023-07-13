@@ -2,12 +2,15 @@ import express, { json } from 'express';
 import { connectDB } from "./config/db";
 import { addUser, fetchData } from "./service/db_service";
 import EthAcc from './models/eth_acc';
-import { parseEther, hexlify, ethers, WebSocketProvider } from 'ethers';
+import { parseEther, hexlify, ethers, WebSocketProvider, TransactionResponse } from 'ethers';
 import { estimateGas, getGasPrice, getTransactionCount, wallet } from './service/rpc_service';
+//import { TransactionResponse } from 'alchemy-sdk';
 require('dotenv').config()
 
 const app = express();
 const port = 3000;
+
+const ABI = process.env.ABI;
 
 app.use(express.json());
 
@@ -63,14 +66,34 @@ app.post('/sendEther/:amount', async (req, res) => {
   });
 });
 
+const provider = new WebSocketProvider(
+  "ws://localhost:8545"
+);
+
+function decodeTransaction(tx: TransactionResponse) {
+  const iface = new ethers.Interface(ABI);
+  return iface.parseTransaction({ data: tx.data, value: tx.value.toString() })
+}
+
+function getEncodedTransactionHash(tx: TransactionResponse, _transactionHash: string) {
+  const decodedTx = decodeTransaction(tx);
+  const assetID = BigInt(decodedTx.args[0]);
+  const amount = BigInt(decodedTx.args[1]);
+  const sorceChain = BigInt(tx.chainId);
+  const executor = tx.from;
+
+  const abi = ["bytes32", "address", "uint256", "uint16", "uint256"];
+  const values = [_transactionHash, executor, amount, assetID, sorceChain];
+  return ethers.solidityPackedKeccak256(abi, values);
+}
+
+function isValidTransaction(tx: TransactionResponse) {
+  return tx == null;
+}
 
 async function getTransfer() {
-  const ABI = require("../../Bridge/artifacts/contracts/Bridge.sol/Bridge.json").abi;
 
-  const provider = new WebSocketProvider(
-    "ws://localhost:8545"
-  );
-  const bridgeAddress = "0x4A679253410272dd5232B3Ff7cF5dbB88f295319";
+  const bridgeAddress = "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1";
   const contract = new ethers.Contract(bridgeAddress, ABI, provider);
 
   await contract.on("Approved", async (proposalHash, _transactionHash) => {
@@ -81,58 +104,38 @@ async function getTransfer() {
     //get transaction with _transactionHash
     //if transaction doesn't exist, call defend function
     const tx = await provider.getTransaction(_transactionHash);
-    if (!tx) {
+    if (isValidTransaction(tx)) {
       console.log("Transaction not found");
       provider.send("defend", proposalHash);
-      const proposal = await provider.send("proposals", proposalHash);
-      console.log(proposal);
-      return;
+      // const proposal = await provider.send("proposals", proposalHash);
+      // console.log(proposal);
+      return false;
     }
     console.log(tx);
 
-    //decode transaction.data
-    const iface = new ethers.Interface(ABI);
-    const decodedTx = iface.parseTransaction({data: tx.data, value: tx.value})
-
-    //get Lock parameters
-    const assetID = BigInt(decodedTx.args[0]);
-    const amount = BigInt(decodedTx.args[1]);
-    const targetChain = BigInt(decodedTx.args[2]);
-
-    const sorceChain = BigInt(tx.chainId);
-    const executor = tx.from;
-
-    console.log("Asset ID:", assetID.toString());
-    console.log("Amount:", amount.toString());
-    console.log("Target chain:", targetChain.toString());
-    console.log("Source chain:", sorceChain.toString());
-    console.log("Executor:", executor);
-    console.log("Proposal hash:", proposalHash);
-
     //calculate proposal hash with Lock parameters using Keccak256
-    const abi = ["bytes32", "address", "uint256", "uint16", "uint256"];
-    const values = [_transactionHash, executor, amount, assetID, sorceChain];
-    const encodedTransactionHash = ethers.solidityPackedKeccak256(abi, values)
+    const encodedTransactionHash = getEncodedTransactionHash(tx, _transactionHash);
     console.log("Encoded transaction hash:", encodedTransactionHash);
 
     //compare proposal hash with calculated hash
-    //if hashes match, do nothing
     //if hashes don't match, call defend function
-    if(encodedTransactionHash == proposalHash) {
+    if (encodedTransactionHash == proposalHash) {
       console.log("Hashes match");
+      return true;
     }
     else {
       console.log("Hashes don't match");
       provider.send("defend", proposalHash);
-      const proposal = await provider.send("proposals", proposalHash);
-      console.log(proposal);
+      // const proposal = await provider.send("proposals", proposalHash);
+      // console.log(proposal);
+      return false;
     }
   });
 }
 
-app.listen(port, () => {
-  return console.log(`Express is listening at http://localhost:${port}`);
-});
+// app.listen(port, () => {
+//   return console.log(`Express is listening at http://localhost:${port}`);
+// });
 
 async function getAllTransfersFromBlock(contract, startBlock) {
   contract.queryFilter("SendMsg", startBlock).then((events) => {
@@ -142,6 +145,7 @@ async function getAllTransfersFromBlock(contract, startBlock) {
 
 connectDB();
 //getAllTransfersFromBlock(contract, 17669455);
-//getTransfer();
+getTransfer();
 
 export default app;
+export { getEncodedTransactionHash, decodeTransaction, isValidTransaction }
