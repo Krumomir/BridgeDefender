@@ -8,7 +8,7 @@ describe('GET /address/:address', () => {
     expect(response.body).toEqual({
       _id: expect.any(String),
       address: '0x369052fE460cf5D3AE7e87451C8b4b867bDa493B',
-      balance: '299675136166298345',
+      balance: '201632203213575624',
       current_block: expect.any(Number),
       txs: expect.any(Array),
       __v: expect.any(Number),

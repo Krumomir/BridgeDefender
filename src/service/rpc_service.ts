@@ -1,12 +1,15 @@
-import { Block, JsonRpcProvider, ethers } from "ethers";
+import { Block, JsonRpcProvider, WebSocketProvider, ethers } from "ethers";
 require('dotenv').config()
 
 const mainnet = "https://eth-mainnet.g.alchemy.com/v2/" + process.env.MAINNET_ALCHEMY_KEY;
 const testnet = "https://eth-sepolia.g.alchemy.com/v2/" + process.env.SEPOLIA_ALCHEMY_KEY;
+const wsSepolia = "wss://eth-sepolia.g.alchemy.com/v2/" + process.env.SEPOLIA_ALCHEMY_KEY;
 
 const mainProvider = new JsonRpcProvider(mainnet);
 const testProvider = new JsonRpcProvider(testnet);
+const wsProvider = new WebSocketProvider(wsSepolia);
 const myPrivateKey = process.env.PRIVATE_KEY;
+const senderAccount = process.env.MY_ADDRESS;
 
 const wallet = new ethers.Wallet(myPrivateKey, testProvider);
 
@@ -42,4 +45,10 @@ async function estimateGas(senderAccount: string, recieverAddress: string, value
     });
 }
 
-export { estimateGas, getGasPrice, getTransactionCount, getBlockNumber, getBlock, getTransaction, getBalance, wallet, mainProvider, testProvider, myPrivateKey }
+async function getAllTransfersFromBlock(contract: ethers.Contract, startBlock: number) {
+    contract.queryFilter("SendMsg", startBlock).then((events) => {
+      console.log(events);
+    });
+  }
+
+export {getAllTransfersFromBlock, estimateGas, getGasPrice, getTransactionCount, getBlockNumber, getBlock, getTransaction, getBalance, wallet, mainProvider, testProvider, myPrivateKey, senderAccount, wsProvider }

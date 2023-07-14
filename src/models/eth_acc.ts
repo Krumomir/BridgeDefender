@@ -1,6 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-// Define the interface for your schema
 interface IEthereumAcc extends Document {
   address: string;
   balance: string;
@@ -8,7 +7,6 @@ interface IEthereumAcc extends Document {
   txs: string[];
 }
 
-// Define the schema
 const EtherumAcc: Schema = new Schema({
     address: { 
         type: String, 
@@ -28,7 +26,6 @@ const EtherumAcc: Schema = new Schema({
     },
 });
 
-// Create the model
 const EthAcc = mongoose.model<IEthereumAcc>('Ethereum model', EtherumAcc);
 
 export default EthAcc;
